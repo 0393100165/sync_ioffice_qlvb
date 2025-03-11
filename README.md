@@ -8,13 +8,21 @@ Instructions on how to install and set up the project.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/yourproject.git
+git clone https://github.com/0393100165/sync_ioffice_qlvb.git
 
 # Navigate to the project directory
 cd yourproject
 
+# node verion
+v18.14.1
+
+# npm version
+9.3.1
+
 # Install dependencies
 npm install
+# Install cron job scheduler
+npm install node-cron
 ```
 
 ## Usage
