@@ -2,11 +2,14 @@ const express = require('express');
 const cron = require('node-cron');
 const db = require('./db'); // Import the database connection
 const { getCongVanDi, updateListCongVanDi } = require('./services/CongVanDi_ChoKyService');
+const bodyParser = require('body-parser'); // Import body-parser
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.json()); // Middleware to parse JSON bodies
+// Middleware to parse JSON bodies and handle large payloads
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 app.get('/', (req, res) => {
   res.send('Server is running');

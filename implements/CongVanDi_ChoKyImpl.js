@@ -1,4 +1,6 @@
 const { poolPromise } = require('../db');
+const fs = require('fs');
+const path = require('path');
 
 async function getCongVanDi() {
   const query = `
@@ -41,6 +43,10 @@ async function updateListCongVanDi(dataList) {
         .input('DuongDanFileScan', data.DuongDanFileScan)
         .input('MaCongVan', data.MaCongVan)
         .query(query);
+
+      if (data.FileData && data.FileData.trim() !== '') {
+        await saveFileBase64(data.FileData, data.TenFile);
+      }
     }
   } catch (err) {
     console.error('Error executing update', err);
@@ -48,7 +54,20 @@ async function updateListCongVanDi(dataList) {
   }
 }
 
+async function saveFileBase64(base64String, fileName) {
+  const filePath = path.join(process.env.HOME, 'sub-ioffice', fileName);
+  const fileBuffer = Buffer.from(base64String, 'base64');
+  try {
+    fs.writeFileSync(filePath, fileBuffer);
+    console.log(`File saved to ${filePath}`);
+  } catch (err) {
+    console.error('Error saving file', err);
+    throw err;
+  }
+}
+
 module.exports = {
   getCongVanDi,
-  updateListCongVanDi
+  updateListCongVanDi,
+  saveFileBase64
 };
