@@ -25,7 +25,7 @@ app.post('/api/congvan_di/update', async (req, res) => {
   try {
     const dataList = req.body;
     await updateListCongVanDi(dataList);
-    res.status(200).send('Update successful');
+    res.status(200).send('Update successfully');
   } catch (err) {
     console.error('Error updating CongVanDi', err);
     res.status(500).send('Internal Server Error');

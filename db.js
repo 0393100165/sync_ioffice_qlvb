@@ -21,27 +21,18 @@ const config = {
   }
 };
 
-let pool;
-
-async function connectToDb() {
-  if (!pool) {
-    try {
-      pool = await sql.connect(config);
-      console.log('Database connection established');
-    } catch (err) {
-      console.error('Database connection failed', err);
-      throw err;
-    }
-  }
-  return pool;
-}
-
-// Establish connection immediately
-connectToDb();
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
+  .then(pool => {
+    console.log('Connected to MSSQL');
+    return pool;
+  })
+  .catch(err => {
+    console.error('Database Connection Failed! Bad Config: ', err);
+    throw err;
+  });
 
 module.exports = {
-  query: async (query) => {
-    const pool = await connectToDb();
-    return pool.request().query(query);
-  }
+  sql,
+  poolPromise
 };
