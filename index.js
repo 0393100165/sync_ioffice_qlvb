@@ -3,6 +3,8 @@ const cron = require('node-cron');
 const db = require('./db'); // Import the database connection
 const { getCongVanDi, updateListCongVanDi } = require('./services/CongVanDi_ChoKyService');
 const bodyParser = require('body-parser'); // Import body-parser
+const UnitJob = require('./job_schedulers/UnitJob'); // Import UnitJob
+const {CongVanDi_ChoKyJob, getResultCongVanDiJob} = require('./job_schedulers/CongVanDi_ChoKyJob'); // Import CongVanDi_ChoKyJob
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,7 +28,7 @@ app.get('/api/congvan_di/get', async (req, res) => {
 
 app.post('/api/congvan_di/update', async (req, res) => {
   try {
-    const dataList = req.body;
+    const dataList = req.body.data;
     await updateListCongVanDi(dataList);
     res.status(200).send('Update successfully');
   } catch (err) {
@@ -35,11 +37,14 @@ app.post('/api/congvan_di/update', async (req, res) => {
   }
 });
 
-cron.schedule('* * * * *', () => {
-    console.log('Cron job running every minute');
-    checkDbConnection();
-});
+// cron.schedule('* * * * *', () => {
+//     console.log('Cron job running every minute');
+//     checkDbConnection();
+// });
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
+  UnitJob(); // Run UnitJob when the server starts
+  // CongVanDi_ChoKyJob();
+  // getResultCongVanDiJob();
 });
