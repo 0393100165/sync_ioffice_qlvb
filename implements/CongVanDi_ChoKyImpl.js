@@ -53,7 +53,6 @@ async function getCongVanDi() {
 
 async function updateListCongVanDi(dataList) {
   const updatedMaCongVanList = [];
-  console.log('dataList: ', dataList);
   try {
     const pool = await poolPromise;
     for (const data of dataList) {
@@ -99,8 +98,6 @@ async function updateListCongVanDi(dataList) {
             .query(query);
             await saveFileBase64(data_file.fileData, data_file.fileName, folderPath, filePath);
           }
-          console.log(data_file);
-          console.error('saveFileBase64 successfully');
         }
       }
       updatedMaCongVanList.push(data.dossierId);
@@ -127,7 +124,7 @@ async function updateTrangThaiDaChuyen(dataList) {
         .input('MaCongVan', data.MaCongVan)
         .query(query);
     }
-    console.log('Updated DaChuyen for all records');
+    console.log('-----Updated DaChuyen for all records');
   } catch (err) {
     console.error('Error executing update', err);
     throw err;
@@ -141,10 +138,10 @@ async function saveFileBase64(base64String, fileName, folderPath, filePath) {
     // Check if the folder exists, if not, create it
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath, { recursive: true });
-      console.log(`Folder created at ${folderPath}`);
+      console.log(`-----Folder created at ${folderPath}`);
     }
     fs.writeFileSync(filePath, fileBuffer);
-    console.log(`File saved to ${filePath}`);
+    console.log(`-----File saved to ${filePath}`);
   } catch (err) {
     console.error('Error saving file', err);
     throw err;

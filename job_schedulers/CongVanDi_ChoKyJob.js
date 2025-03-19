@@ -1,45 +1,13 @@
 const cron = require('node-cron');
 const axios = require('axios');
-const { poolPromise } = require('../db'); // Assuming db.js exports poolPromise
 const { getCongVanDi, updateTrangThaiDaChuyen, updateListCongVanDi } = require('../implements/CongVanDi_ChoKyImpl'); // Import getCongVanDi
+const { getAuthToken } = require('../authToken'); // Import getAuthToken
 
-let authToken = '';
-
-async function updateAuthToken() {
-    try {
-        const response = await axios.post('http://localhost:8080/qlvb/api/login/v3/', {
-            device: "\"Google Android SDK built for x86\"",
-            language: "VI",
-            password: "ToPhanMemGP2@2025",
-            tokenFireBase: "cmB_ptRjFCc:APA91bG0XFcR3wcif27eZLunMaK3-yzoXIds3xCe0G9LFg3741sWT4UBTKbezqYC56peH4QNP1kv3KzZ10T9mEh0VvC4Pi1rSYfEK7WtG4qL5RKOIFhxPtmg1qme1ArqhSH5LCDNjkpg",
-            type: "ANDROID",
-            username: "admin.tpmgp2"
-        }, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.data && response.data.data && response.data.data.token) {
-            authToken = response.data.data.token;
-            console.log('Updated auth token:', authToken);
-        } else {
-            console.error('Failed to update auth token: Invalid response data');
-        }
-    } catch (error) {
-        console.error('Failed to update auth token:', error);
-    }
-}
-
-setInterval(updateAuthToken, 5 * 60 * 1000); // Update every 30 minutes
-
-// Initial token update
-updateAuthToken();
 
 const createIntegrationCongVan = async () => {
+  let authToken = getAuthToken();
   try {
     const data = await getCongVanDi();
-
     const customData = data.map(item => ({
       dossierId: item.MaCongVan,
       summary: item.NoiDung,
@@ -69,13 +37,14 @@ const createIntegrationCongVan = async () => {
     if (response.data.status.code === '0' && response.data.data === 'TRUE') {
         updateTrangThaiDaChuyen(data);
     }
-    console.log('Data posted successfully:', response.data);
+    console.log('-----Sync CongVan successfully: ', response.data.data);
   } catch (error) {
     console.error('Error fetching or posting data:', error);
   }
 };
 
 const getResultCongVanDi = async () => {
+  let authToken = getAuthToken();
   try {
     const response = await axios.get('http://localhost:8080/qlvb/api/shared/congvan_stc/get_result/', {
       headers: {
@@ -102,7 +71,7 @@ const getResultCongVanDi = async () => {
 };
 
 const sendIdsToReceiveStatus = async (ids) => {
-  console.log('sendIdsToReceiveStatus:', ids);
+  let authToken = getAuthToken();
   try {
     const response = await axios.post('http://localhost:8080/qlvb/api/shared/integration/doc/receive_status/', null, {
       params: {ids},
@@ -111,7 +80,7 @@ const sendIdsToReceiveStatus = async (ids) => {
         'Content-Type': 'application/json'
       }
     });
-    console.log('IDs sent successfully:', response.data);
+    console.log('-----update Status to IOFFICE successfully: ', response.data);
   } catch (error) {
     console.error('Error sending IDs:', error);
   }
@@ -119,14 +88,14 @@ const sendIdsToReceiveStatus = async (ids) => {
 
 const CongVanDi_ChoKyJob = () => {
   cron.schedule('*/1 * * * *', () => {
-    console.log('CongVanDi_ChoKyJob running every 5 minutes');
+    console.log('-----CongVanDi_ChoKyJob running every 5 minutes-----');
     createIntegrationCongVan();
   });
 };
 
 const getResultCongVanDiJob = () => {
   cron.schedule('*/2 * * * *', () => {
-    console.log('getResultCongVanDiJob running every 5 minutes');
+    console.log('-----getResultCongVanDiJob running every 5 minutes-----');
     getResultCongVanDi();
   });
 };

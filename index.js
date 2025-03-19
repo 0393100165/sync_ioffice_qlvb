@@ -43,8 +43,8 @@ app.post('/api/congvan_di/update', async (req, res) => {
 // });
 
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
-  // UnitJob(); // Run UnitJob when the server starts
+  console.log(`-----Server is listening on port: ${port}`);
+  UnitJob(); // Run UnitJob when the server starts
   CongVanDi_ChoKyJob();
   getResultCongVanDiJob();
 });
