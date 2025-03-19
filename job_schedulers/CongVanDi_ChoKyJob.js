@@ -31,7 +31,7 @@ async function updateAuthToken() {
     }
 }
 
-setInterval(updateAuthToken, 30 * 60 * 1000); // Update every 30 minutes
+setInterval(updateAuthToken, 5 * 60 * 1000); // Update every 30 minutes
 
 // Initial token update
 updateAuthToken();
@@ -44,16 +44,22 @@ const createIntegrationCongVan = async () => {
       dossierId: item.MaCongVan,
       summary: item.NoiDung,
       documentType: item.MaLoaiHinhCongVan,
-      loaiVBId: item.MaLoaiHinhCongVan,
+      loaiVBId: item.MaHinhThuc,
+      maNguoiKy: item.MaNguoiKy,
+      maNguoiTao: item.MaNguoiSoan,
+      noiNhan: item.MaCoQuan,
+      noiNhanNgoai: item.DonViNgoai,
+      maCongVanSo: item.MaCongVanSo,
       files: [{
         fileId: item.MaCongVan,
         fileName: item.TenFile,
-        fileType: 'application/pdf', // Assuming the file type is PDF
+        fileType: '', // Assuming the file type is PDF
         fileSize: item.SoTrang, // Assuming file size is the number of pages
-        fileData: item.DataFile
+        fileData: item.DataFile,
+        soTrang: item.SoTrang
       }]
     }));
-    
+    // console.log(customData);
     const response = await axios.post('http://localhost:8080/qlvb/api/shared/integration/doc/create/', customData, {
       headers: {
         'X-Authentication-Token': authToken,
@@ -77,23 +83,50 @@ const getResultCongVanDi = async () => {
       }
     });
     const dataList = response.data.data;
-    // Process dataList as needed
-    updateListCongVanDi(dataList);
+    // Check if dataList is not an empty array
+    if (Array.isArray(dataList) && dataList.length > 0) {
+      const idsArray = await updateListCongVanDi(dataList);
+      console.error('idsArray: ', idsArray);
+      if (Array.isArray(idsArray) && idsArray.length > 0) {
+        const ids = idsArray.join(','); // Join the array elements into a comma-separated string
+        await sendIdsToReceiveStatus(ids);
+      } else {
+        console.error('No IDs to send');
+      }
+    } else {
+      console.error('dataList is empty');
+    }
   } catch (error) {
     console.error('Error fetching dataList:', error);
   }
 };
 
+const sendIdsToReceiveStatus = async (ids) => {
+  console.log('sendIdsToReceiveStatus:', ids);
+  try {
+    const response = await axios.post('http://localhost:8080/qlvb/api/shared/integration/doc/receive_status/', null, {
+      params: {ids},
+      headers: {
+        'X-Authentication-Token': authToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('IDs sent successfully:', response.data);
+  } catch (error) {
+    console.error('Error sending IDs:', error);
+  }
+};
+
 const CongVanDi_ChoKyJob = () => {
-  cron.schedule('*/5 * * * *', () => {
+  cron.schedule('*/1 * * * *', () => {
     console.log('CongVanDi_ChoKyJob running every 5 minutes');
     createIntegrationCongVan();
   });
 };
 
 const getResultCongVanDiJob = () => {
-  cron.schedule('*/5 * * * *', () => {
-    console.log('CongVanDi_ChoKyJob running every 5 minutes');
+  cron.schedule('*/2 * * * *', () => {
+    console.log('getResultCongVanDiJob running every 5 minutes');
     getResultCongVanDi();
   });
 };
