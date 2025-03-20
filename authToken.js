@@ -12,7 +12,7 @@ const getAuthToken = () => {
 
 const updateAuthToken = async () => {
   try {
-    const response = await axios.post('http://localhost:8080/qlvb/api/login/v3/', {
+    const response = await axios.post(`${process.env.API_PATH_LOCAL}/login/v3/`, {
       device: "\"Google Android SDK built for x86\"",
       language: "VI",
       password: "ToPhanMemGP2@2025",

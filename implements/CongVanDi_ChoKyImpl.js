@@ -4,30 +4,40 @@ const path = require('path');
 
 async function getCongVanDi() {
   const query = `
-    SELECT 
-      cvd_ck.MaCongVan, 
-      case 
-	  	when cvd_ck.MaNguoiKy is not null then
-       			(select nsd.MaNguoi_IOfice from CongVan_2025.dbo.MaPping_NSD nsd where nsd.MaNguoiSD_SKH = cvd_ck.MaNguoiKy)
-      	else cvd_ck.MaNguoiKy
-      end as MaNguoiKy,
-      case 
-	  	when cvd_ck.MaNguoiSoanVB is not null then
-       			(select nsd.MaNguoi_IOfice from CongVan_2025.dbo.MaPping_NSD nsd where nsd.MaNguoiSD_SKH = cvd_ck.MaNguoiSoanVB)
-      	else cvd_ck.MaNguoiSoanVB
-      end as MaNguoiSoan,
-      NoiDung, 
-      NoiNhan, 
-      TenFile,
-      dhtvbm.MaHinhThuc_STC as MaHinhThuc,
-      SoTrang,
-      nncvck.MaCoQuan as MaCoQuan,
-      cvd_ck.NoiNhan_KhongDanhMuc as DonViNgoai,
-      cvd_ck.MaCongVanSo
-    FROM CongVan_2025.dbo.CongVanDi_ChoKy cvd_ck
-    JOIN CongVan_2025.dbo.Mapping_NSD nsd on cvd_ck.MaNguoiKy = nsd.MaNguoiSD_SKH
-    JOIN CongVan_2025.dbo.NoiNhanCongVan_ChoKy nncvck on cvd_ck.MaCongVan = nncvck.MaCongVan
-    JOIN CongVan_2025.dbo.DM_HinhTHucVanBan_Mapping dhtvbm on cvd_ck.MaLoaiCongVan = dhtvbm.MaHinhThuc_SKH
+  		SELECT
+		    cvd_ck.MaCongVan, 
+		    CASE 
+		        WHEN cvd_ck.MaNguoiKy IS NOT NULL THEN
+		            (SELECT nsd.MaNguoi_IOfice 
+		             FROM CongVan_2025.dbo.Mapping_NSD nsd 
+		             WHERE nsd.MaNguoiSD_SKH = cvd_ck.MaNguoiKy)
+		        ELSE cvd_ck.MaNguoiKy
+		    END AS MaNguoiKy,
+		    CASE 
+		        WHEN cvd_ck.MaNguoiSoanVB IS NOT NULL THEN
+		            (SELECT nsd.MaNguoi_IOfice 
+		             FROM CongVan_2025.dbo.Mapping_NSD nsd 
+		             WHERE nsd.MaNguoiSD_SKH = cvd_ck.MaNguoiSoanVB)
+		        ELSE cvd_ck.MaNguoiSoanVB
+		    END AS MaNguoiSoan,
+		    cvd_ck.NoiDung,
+		    ISNULL(nnc.NoiNhan, '') AS NoiNhan, 
+		    cvd_ck.TenFile,
+		    dhtvbm.MaHinhThuc_STC AS MaHinhThuc,
+		    cvd_ck.SoTrang,
+		    cvd_ck.NoiNhan_KhongDanhMuc AS DonViNgoai,
+		    cvd_ck.MaCongVanSo
+		FROM CongVan_2025.dbo.CongVanDi_ChoKy cvd_ck
+		LEFT JOIN CongVan_2025.dbo.DM_HinhTHucVanBan_Mapping dhtvbm 
+		    ON cvd_ck.MaLoaiCongVan = dhtvbm.MaHinhThuc_SKH
+		LEFT JOIN (
+		    SELECT 
+		        nn.MaCongVan,
+		        STRING_AGG(CAST(dcqphi.AgentID AS VARCHAR(40)) + '|' + nn.MaCoQuan, ', ') AS NoiNhan
+		    FROM CongVan_2025.dbo.NoiNhanCongVan_ChoKy nn
+		    JOIN CongVan_2025.dbo.DM_CoQuanPhatHanh_Ioffce dcqphi on nn.MaCoQuan = dcqphi.MaCoQuan 
+		    GROUP BY nn.MaCongVan
+		) nnc ON cvd_ck.MaCongVan = nnc.MaCongVan
   `;
   //    WHERE cvd_ck.DaChuyen is null
   try {
@@ -35,7 +45,7 @@ async function getCongVanDi() {
     const result = await pool.request().query(query);
     for (const record of result.recordset) {
       if (record.TenFile) {
-        const filePath = path.join(process.env.HOME, 'sub-ioffice', record.TenFile);
+        const filePath = path.join(process.env.HOME, process.env.TEST_FOLDER, record.TenFile); // TEST_FOLDER not include '/'
         if (fs.existsSync(filePath)) {
           const fileBuffer = fs.readFileSync(filePath);
           record.DataFile = fileBuffer.toString('base64');
@@ -59,8 +69,8 @@ async function updateListCongVanDi(dataList) {
       for (const data_file of data.files) {
         if (data_file.fileData && data_file.fileData.trim() !== '') {
           if (data_file.fileType === 'pdf') {
-            const folderPath = path.join(process.env.HOME, 'sub-ioffice');
-            const filePath = path.join(process.env.HOME, 'sub-ioffice', data_file.fileName);
+            const folderPath = path.join(process.env.HOME, process.env.TEST_FOLDER);
+            const filePath = path.join(process.env.HOME, process.env.TEST_FOLDER, data_file.fileName);
             // const folderPath = path.join(process.env.ROOT_FOLDER, process.env.PDF_FOLDER);
             const query = `
             UPDATE CongVan_2025.dbo.CongVanDi_ChoKy
@@ -79,8 +89,8 @@ async function updateListCongVanDi(dataList) {
             await saveFileBase64(data_file.fileData, data_file.fileName, folderPath, filePath);
           }
           else {
-            const folderPath = path.join(process.env.HOME, 'sub-ioffice');
-            const filePath = path.join(process.env.HOME, 'sub-ioffice', data_file.fileName);
+            const folderPath = path.join(process.env.HOME, process.env.TEST_FOLDER);
+            const filePath = path.join(process.env.HOME, process.env.TEST_FOLDER, data_file.fileName);
             // const folderPath = path.join(process.env.ROOT_FOLDER, process.env.PDF_FOLDER);
             const query = `
             UPDATE CongVan_2025.dbo.CongVanDi_ChoKy
@@ -132,7 +142,7 @@ async function updateTrangThaiDaChuyen(dataList) {
 }
 
 async function saveFileBase64(base64String, fileName, folderPath, filePath) {
-  // const filePath = path.join(process.env.HOME, 'sub-ioffice', fileName);
+  // const filePath = path.join(process.env.HOME, process.env.TEST_FOLDER, fileName);
   const fileBuffer = Buffer.from(base64String, 'base64');
   try {
     // Check if the folder exists, if not, create it

@@ -15,7 +15,7 @@ const createIntegrationCongVan = async () => {
       loaiVBId: item.MaHinhThuc,
       maNguoiKy: item.MaNguoiKy,
       maNguoiTao: item.MaNguoiSoan,
-      noiNhan: item.MaCoQuan,
+      noiNhan: item.NoiNhan,
       noiNhanNgoai: item.DonViNgoai,
       maCongVanSo: item.MaCongVanSo,
       files: [{
@@ -28,7 +28,7 @@ const createIntegrationCongVan = async () => {
       }]
     }));
     // console.log(customData);
-    const response = await axios.post('http://localhost:8080/qlvb/api/shared/integration/doc/create/', customData, {
+    const response = await axios.post(process.env.API_PATH_LOCAL+'/shared/integration/doc/create/', customData, {
       headers: {
         'X-Authentication-Token': authToken,
         'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ const createIntegrationCongVan = async () => {
 const getResultCongVanDi = async () => {
   let authToken = getAuthToken();
   try {
-    const response = await axios.get('http://localhost:8080/qlvb/api/shared/congvan_stc/get_result/', {
+    const response = await axios.get(process.env.API_PATH_LOCAL+'/shared/congvan_stc/get_result/', {
       headers: {
         'X-Authentication-Token': authToken
       }
@@ -63,7 +63,7 @@ const getResultCongVanDi = async () => {
         console.error('No IDs to send');
       }
     } else {
-      console.error('dataList is empty');
+      console.error('-----Data Result Is Empty');
     }
   } catch (error) {
     console.error('Error fetching dataList:', error);
@@ -73,7 +73,7 @@ const getResultCongVanDi = async () => {
 const sendIdsToReceiveStatus = async (ids) => {
   let authToken = getAuthToken();
   try {
-    const response = await axios.post('http://localhost:8080/qlvb/api/shared/integration/doc/receive_status/', null, {
+    const response = await axios.post(process.env.API_PATH_LOCAL+'/shared/integration/doc/receive_status/', null, {
       params: {ids},
       headers: {
         'X-Authentication-Token': authToken,
@@ -88,14 +88,14 @@ const sendIdsToReceiveStatus = async (ids) => {
 
 const CongVanDi_ChoKyJob = () => {
   cron.schedule('*/1 * * * *', () => {
-    console.log('-----CongVanDi_ChoKyJob running every 5 minutes-----');
+    console.log('-----CongVanDi_ChoKyJob running every minute-----');
     createIntegrationCongVan();
   });
 };
 
 const getResultCongVanDiJob = () => {
   cron.schedule('*/2 * * * *', () => {
-    console.log('-----getResultCongVanDiJob running every 5 minutes-----');
+    console.log('-----getResultCongVanDiJob running every 2 minutes-----');
     getResultCongVanDi();
   });
 };

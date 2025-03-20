@@ -23,7 +23,7 @@ const getAllUnitJob = async () => {
     return;
   }
   try {
-    const response = await axios.get('http://localhost:8080/qlvb/api/shared/unit/get_all/', {
+    const response = await axios.get(process.env.API_PATH_LOCAL+'/shared/unit/get_all/', {
       headers: {
         'X-Authentication-Token': authToken
       }
